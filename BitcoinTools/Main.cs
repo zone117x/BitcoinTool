@@ -22,7 +22,6 @@ namespace BitcoinTool
     public partial class Main : Form
     {
 
-        double btcUsd = 0;
         Wallet wallet;
 
         public Main()
@@ -32,10 +31,13 @@ namespace BitcoinTool
 
             labelKeyError.Text = "";
 
-            GetExchangeRates();
+    
 
             toolStrip1.Renderer = new FixedTSSR();
 
+            Wallet w = Wallet.FromPrivateKeyHex("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+            var aa = w.Address(true);
+            MessageBox.Show(aa);
         }
 
         public class FixedTSSR : ToolStripSystemRenderer
@@ -44,85 +46,6 @@ namespace BitcoinTool
         }
 
 
-        private void buttonRefreshExchange_Click(object sender, EventArgs e)
-        {
-            GetExchangeRates();
-        }
-
-        void UpdateWalletBalance()
-        {
-            if (btcUsd == 0 || labelWalletBalance.Tag == null)
-                return;
-
-            var balanceUSD = (double)labelWalletBalance.Tag * btcUsd;
-            labelWalletBalance.Text = String.Format("{0} BTC / {1:C}", labelWalletBalance.Tag, balanceUSD);
-        }
-
-        void GetWalletBalance()
-        {
-            labelWalletBalance.Text = "...";
-            labelWalletTxns.Text = "...";
-            if (wallet == null) return;
-
-            wallet.FetchBlockChainInfo(info => {
-                labelWalletTxns.Text = info.NumberOfTransactions + " Past Transactions";
-                labelWalletBalance.Tag = info.FinalBalance / 100000000d;
-                UpdateWalletBalance();
-            });
-        }
-
-        class MarketBinding
-        {
-            public Label label { get; set; }
-            public string endpoint { get; set; }
-            public Func<dynamic, object> parser {get; set;}
-            public MarketBinding(Label l, string e, Func<dynamic, object> p)
-            {
-                label = l;
-                endpoint = e;
-                parser = p;
-            }
-        }
-
-        void GetExchangeRates()
-        {
-
-            Func<string, string> formatPrice = p => String.Format("{0:C}", Decimal.Parse(p));
-
-            var markets = new MarketBinding[] { 
-                new MarketBinding(labelPriceAverage, "http://api.bitcoinaverage.com/ticker/USD", d => {
-                        btcUsd = (double)(decimal)d["last"];
-                        UpdateWalletBalance();
-                        return d["last"];
-                    }),
-                new MarketBinding(labelPriceCoinbase, "https://coinbase.com/api/v1/prices/spot_rate", d => d["amount"]),
-                new MarketBinding(labelPriceMtGox, "http://data.mtgox.com/api/2/BTCUSD/money/ticker_fast", d => d["data"]["last"]["value"]),
-                new MarketBinding(labelPriceBitstamp, "https://www.bitstamp.net/api/ticker/", d => d["last"]),
-                new MarketBinding(labelPriceBTCe, "https://btc-e.com/api/2/btc_usd/ticker", d => d["ticker"]["last"]),
-                new MarketBinding(labelPriceCampBX, "http://campbx.com/api/xticker.php", d => d["Last Trade"])
-            };
-
-
-            foreach (var market in markets)
-            {
-                market.label.Text = "...";
-                var c = new WebClient();
-                c.DownloadStringAsync(new Uri(market.endpoint));
-                c.DownloadStringCompleted += (s, e) => {
-                    try
-                    {
-                        var dynamicObj = new System.Web.Script.Serialization.JavaScriptSerializer().Deserialize<dynamic>(e.Result);
-                        var price = market.parser(dynamicObj);
-                        decimal priceDecimal = price is string ? Decimal.Parse(price) : price;
-                        market.label.Text = String.Format("{0:C}", priceDecimal);
-                    }
-                    catch
-                    {
-                        market.label.Text = "n/a";
-                    }
-                };
-            }
-        }
 
 
         void DisplayWallet(Wallet wallet)
@@ -130,33 +53,16 @@ namespace BitcoinTool
             this.wallet = wallet;
             labelKeyError.Text = "";
 
-            string newPassphrase = wallet.Passphrase != null ? wallet.Passphrase : "";
-            if (textBoxPassphrase.Text != newPassphrase){
-                ignoreTextBoxPassphrase = true;
-                textBoxPassphrase.Text = newPassphrase;
-            }
+            textBoxPrivateKey.TextChanged -= textBoxPrivateKey_TextChanged;
+            textBoxPrivateKey.Text = wallet.PrivateKeyWIF(checkBoxCompressed.Checked);
+            textBoxPrivateKey.TextChanged += textBoxPrivateKey_TextChanged;
 
-            string newMinikey = wallet.Minikey != null ? wallet.Minikey : "";
-            if (textBoxMinikey.Text != newMinikey)
-            {
-                ignoreTextBoxMinikey = true;
-                textBoxMinikey.Text = newMinikey;
-            }
-
-            string newPrivateKey = wallet.PrivateKeyWIF;
-            if (textBoxPrivateKey.Text != newPrivateKey)
-            {
-                ignoreTextBoxPrivateKey = true;
-                textBoxPrivateKey.Text = newPrivateKey;
-            }
-
-            textBoxAddress.Text = wallet.Address;
+            textBoxAddress.Text = wallet.Address(checkBoxCompressed.Checked);
             textBoxSecretExponent.Text = wallet.PrivateKeyHex;
-            textBoxHash160.Text = wallet.Hash160;
-            textBoxPointConversion.Text = wallet.IsCompressed ? "compressed" : "uncompressed";
-            textBoxPublicKey.Text = wallet.PublicKeyHex;
-            textBoxPrivateKeyDER.Text = wallet.PrivateKeyDER;
-            GetWalletBalance();
+            textBoxHash160.Text = wallet.Hash160(checkBoxCompressed.Checked);
+            textBoxPublicKey.Text = wallet.PublicKeyHex(checkBoxCompressed.Checked);
+            textBoxPrivateKeyDER.Text = wallet.PrivateKeyDER(checkBoxCompressed.Checked);
+
         }
 
         
@@ -171,7 +77,6 @@ namespace BitcoinTool
                 textBoxAddress,
                 textBoxSecretExponent,
                 textBoxHash160,
-                textBoxPointConversion,
                 textBoxPublicKey,
                 textBoxPrivateKeyDER
             };
@@ -179,73 +84,48 @@ namespace BitcoinTool
             {
                 if (t != exclude)
                 {
-                    if (t.Text != "")
-                    {
-                        if (t == textBoxPassphrase) ignoreTextBoxPassphrase = true;
-                        else if (t == textBoxMinikey) ignoreTextBoxMinikey = true;
-                        else if (t == textBoxPrivateKey) ignoreTextBoxPrivateKey = true;
-                    }
                     t.Text = "";
                 }
             }
-            labelWalletBalance.Text = "...";
-            labelWalletTxns.Text = "...";
-            labelWalletBalance.Tag = null;
+
         }
 
-        void TryKey(string key)
-        {
-            try
-            {
-                DisplayWallet(new Wallet(key));
-            }
-            catch (Exception e)
-            {
-                labelKeyError.Text = e.Message;
-                wallet = null;
-            }
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            GetWalletBalance();
-        }
-
-        bool ignoreTextBoxPassphrase = false;
-        bool ignoreTextBoxMinikey = false;
-        bool ignoreTextBoxPrivateKey = false;
 
         private void textBoxPassphrase_TextChanged(object sender, EventArgs e)
         {
-            if (ignoreTextBoxPassphrase)
-            {
-                ignoreTextBoxPassphrase = false;
-                return;
-            }
+            if (textBoxPassphrase.Text == "") return;
             ClearTextboxes(textBoxPassphrase);
             DisplayWallet(Wallet.FromPassphrase(textBoxPassphrase.Text));
         }
 
         private void textBoxMinikey_TextChanged(object sender, EventArgs e)
         {
-            if (ignoreTextBoxMinikey)
+            try
             {
-                ignoreTextBoxMinikey = false;
-                return;
+                var w = Wallet.FromMiniKey(textBoxMinikey.Text);
+                ClearTextboxes(textBoxMinikey);
+                DisplayWallet(w);
             }
-            ClearTextboxes(textBoxMinikey);
-            TryKey(textBoxMinikey.Text);
+            catch (Exception err)
+            {
+                labelKeyError.Text = err.Message;
+                wallet = null;
+            }
         }
 
         private void textBoxPrivateKey_TextChanged(object sender, EventArgs e)
         {
-            if (ignoreTextBoxPrivateKey)
+            try
             {
-                ignoreTextBoxPrivateKey = false;
-                return;
+                var w = Wallet.FromWIF(textBoxPrivateKey.Text, c => checkBoxCompressed.Checked = c);
+                ClearTextboxes(textBoxPrivateKey);
+                DisplayWallet(w);
             }
-            ClearTextboxes(textBoxPrivateKey);
-            TryKey(textBoxPrivateKey.Text);
+            catch (Exception err)
+            {
+                labelKeyError.Text = err.Message;
+                wallet = null;
+            }
             
         }
 
@@ -263,14 +143,8 @@ namespace BitcoinTool
             };
 
             var poolType = typeDict[(ToolStripMenuItem)sender];
+            textBoxMinikey.Text = (Wallet.GenerateMiniKey(poolType));
 
-            DisplayWallet(new Wallet(Wallet.GenerateMiniKey(poolType)));
-
-        }
-
-        private void privateKeyToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            DisplayWallet(new Wallet(sender.Equals(compressedToolStripMenuItem)));
         }
 
         void GetRandomPhrase(Action<string> callback)
@@ -289,6 +163,18 @@ namespace BitcoinTool
         {
             GetRandomPhrase(s => textBoxPassphrase.Text = s);
         }
+
+        private void toolStripButton2_Click(object sender, EventArgs e)
+        {
+            ClearTextboxes();
+            DisplayWallet(new Wallet());
+        }
+
+        private void checkBoxCompressed_CheckedChanged(object sender, EventArgs e)
+        {
+            DisplayWallet(wallet);
+        }
+
 
     }
 }

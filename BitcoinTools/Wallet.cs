@@ -13,32 +13,50 @@ namespace BitcoinTool
     {
         Secp256k1 curvePoint;
         byte[] privateKeyBytes;
-        bool compressed;
-        string passphrase;
-        string minikey;
+
+
+        static byte[] HexToBytes(String HexString)
+        {
+            int NumberChars = HexString.Length;
+            byte[] bytes = new byte[NumberChars / 2];
+            for (int i = 0; i < NumberChars; i += 2)
+            {
+                bytes[i / 2] = Convert.ToByte(HexString.Substring(i, 2), 16);
+            }
+            return bytes;
+        }
 
         public static Wallet FromPassphrase(string passphrase)
         {
-            var wif = Encoders.PassphraseToWIF(passphrase);
-            return new Wallet(wif, passphrase);
+            var privateKeyBytes = Encoders.SHA256(Encoding.ASCII.GetBytes(passphrase));
+            return new Wallet(privateKeyBytes);
         }
 
-        public Wallet(bool compressed = false)
+        public static Wallet FromPrivateKeyHex(string hex)
         {
-            privateKeyBytes = GeneratePrivateKey();
-            this.compressed = compressed;
+            return new Wallet(HexToBytes(hex));
         }
 
-        public Wallet(String privateKey, string passphrase = null)
+        public static Wallet FromMiniKey(string miniKey)
+        {
+            switch (miniKey.Length)
+            {
+                case 22:
+                case 30:
+                    ValidateMiniKey(miniKey);
+                    var privateKeyBytes = Encoders.SHA256(miniKey);
+                    return new Wallet(privateKeyBytes);
+                default:
+                    throw new System.ArgumentException("Key must be 22 or 30 chars for minikeys");
+            }
+        }
+
+        public static Wallet FromWIF(string privateKey, Action<bool> isCompressed = null)
         {
 
             CheckBase58(privateKey);
 
-            this.passphrase = passphrase;
-            if (passphrase != null && privateKey != Encoders.PassphraseToWIF(passphrase))
-                throw new System.ArgumentException("Passphrase does not match private key string");
-
-
+            byte[] privateKeyBytes;
             switch (privateKey.Length)
             {
                 case 51:
@@ -46,44 +64,27 @@ namespace BitcoinTool
                     ValidatePrivateKey(privateKey);
                     privateKeyBytes = Encoders.WIFToBytes(privateKey);
                     break;
-                case 22:
-                case 30:
-                    minikey = privateKey;
-                    ValidateMiniKey(privateKey);
-                    privateKeyBytes = Encoders.SHA256(privateKey);
-                    break;
                 default:
-                    throw new System.ArgumentException("Key must be 51 or 52 chars, or 22 or 30 chars for minikeys");
+                    throw new System.ArgumentException("Key must be 51 or 52 chars");
             }
 
-            if (privateKey.Length == 52)
-                compressed = true;
+            var compressed = privateKey.Length == 52;
+            if (isCompressed != null) isCompressed(compressed);
+
+            return new Wallet(privateKeyBytes);
         }
 
-        public bool IsCompressed {
-            get
-            {
-                return compressed;
-            }
-        }
-
-        public string Passphrase
+        public Wallet()
         {
-            get
-            {
-                return passphrase;
-            }
+            privateKeyBytes = GeneratePrivateKey();
         }
 
-        public string Minikey
+        public Wallet(byte[] privateKeyBytes)
         {
-            get
-            {
-                return minikey;
-            }
+            this.privateKeyBytes = privateKeyBytes;
         }
 
-        void CheckBase58(string key)
+        static void CheckBase58(string key)
         {
             var pool = Encoders.GetCharacterPool();
             foreach (char c in key)
@@ -140,19 +141,13 @@ namespace BitcoinTool
                 return privateKeyBytes;
             }
         }
-        public string PrivateKeyWIF
+        public string PrivateKeyWIF(bool compressed)
         {
-            get
-            {
-                return Encoders.BytesToWIF(privateKeyBytes, compressed);
-            }
+            return Encoders.BytesToWIF(privateKeyBytes, compressed);
         }
-        public string PrivateKeyDER
+        public string PrivateKeyDER(bool compressed)
         {
-            get
-            {
-                return Encoders.BytesToHex(CurvePoint.GetDER(compressed));
-            }
+            return Encoders.BytesToHex(CurvePoint.GetDER(compressed));
         }
         
 
@@ -166,37 +161,25 @@ namespace BitcoinTool
             }
         }
 
-        public string Hash160
+        public string Hash160(bool compressed)
         {
-            get
-            {
-                return Encoders.BytesToHex(Encoders.Hash160(Encoders.SHA256(PublicKeyBytes)));
-            }
+            return Encoders.BytesToHex(Encoders.Hash160(Encoders.SHA256(PublicKeyBytes(compressed))));
         }
 
-        public string PublicKeyHex
+        public string PublicKeyHex(bool compressed)
         {
-            get
-            {
-                return Encoders.BytesToHex(PublicKeyBytes);
-            }
+            return Encoders.BytesToHex(PublicKeyBytes(compressed));
         }
 
-        byte[] PublicKeyBytes
+        byte[] PublicKeyBytes(bool compressed)
         {
-            get
-            {
-                return CurvePoint.GetPublicKey(compressed);
-            }
+            return CurvePoint.GetPublicKey(compressed);
         }
 
-        public string Address
+        public string Address(bool compressed)
         {
-            get
-            {
-                var addressBytes = Encoders.PublicKeyToAddressBytes(PublicKeyBytes);
-                return Encoders.Base58CheckEncode(addressBytes);
-            }
+            var addressBytes = Encoders.PublicKeyToAddressBytes(PublicKeyBytes(compressed));
+            return Encoders.Base58CheckEncode(addressBytes);
         }
 
         byte[] GeneratePrivateKey()
