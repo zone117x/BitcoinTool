@@ -35,9 +35,19 @@ namespace BitcoinTool
 
             toolStrip1.Renderer = new FixedTSSR();
 
-            Wallet w = Wallet.FromPrivateKeyHex("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
-            var aa = w.Address(true);
-            MessageBox.Show(aa);
+            //Wallet w = Wallet.FromPrivateKeyHex("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+            //var aa = w.Address(true);
+            //MessageBox.Show(aa);
+            string key = null;
+
+            Parallel.For(0, long.MaxValue, (i, p) => 
+            {
+                key = Wallet.GenerateUpperWIF();
+                p.Stop();
+            });
+
+            Console.WriteLine("success: " + key);
+            Console.ReadLine();
         }
 
         public class FixedTSSR : ToolStripSystemRenderer
@@ -54,14 +64,26 @@ namespace BitcoinTool
             labelKeyError.Text = "";
 
             textBoxPrivateKey.TextChanged -= textBoxPrivateKey_TextChanged;
-            textBoxPrivateKey.Text = wallet.PrivateKeyWIF(checkBoxCompressed.Checked);
-            textBoxPrivateKey.TextChanged += textBoxPrivateKey_TextChanged;
 
-            textBoxAddress.Text = wallet.Address(checkBoxCompressed.Checked);
             textBoxSecretExponent.Text = wallet.PrivateKeyHex;
-            textBoxHash160.Text = wallet.Hash160(checkBoxCompressed.Checked);
-            textBoxPublicKey.Text = wallet.PublicKeyHex(checkBoxCompressed.Checked);
-            textBoxPrivateKeyDER.Text = wallet.PrivateKeyDER(checkBoxCompressed.Checked);
+
+            if (checkBoxCompressed.Checked)
+            {
+                textBoxPrivateKey.Text = wallet.PrivateKeyWIFCompressed;
+                textBoxAddress.Text = wallet.AddressCompressed;
+                textBoxHash160.Text = wallet.Hash160Compressed;
+                textBoxPublicKey.Text = wallet.PublicKeyHexCompressed;
+                textBoxPrivateKeyDER.Text = wallet.PrivateKeyDERCompressed;
+            }
+            else
+            {
+                textBoxPrivateKey.Text = wallet.PrivateKeyWIF;
+                textBoxAddress.Text = wallet.Address;
+                textBoxHash160.Text = wallet.Hash160;
+                textBoxPublicKey.Text = wallet.PublicKeyHex;
+                textBoxPrivateKeyDER.Text = wallet.PrivateKeyDER;
+            }
+            textBoxPrivateKey.TextChanged += textBoxPrivateKey_TextChanged;
 
         }
 
@@ -131,15 +153,15 @@ namespace BitcoinTool
 
         private void minikeyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var typeDict = new Dictionary<ToolStripMenuItem, Wallet.CharacterPool>
+            var typeDict = new Dictionary<ToolStripMenuItem, CharacterPool>
             {
-                { alphanumericToolStripMenuItem, Wallet.CharacterPool.AlphanumericMixedCase },
-                { alphanumericUpperCaseToolStripMenuItem, Wallet.CharacterPool.AlphanumericUppercase },
-                { alphanumericLowercaseToolStripMenuItem, Wallet.CharacterPool.AlphanumericLowercase },
-                { numericToolStripMenuItem, Wallet.CharacterPool.Numeric },
-                { alphaMixedCaseToolStripMenuItem, Wallet.CharacterPool.AlphaMixedCase },
-                { alphaUppercaseToolStripMenuItem, Wallet.CharacterPool.AlphaUppercase },
-                { alphaLowercaseToolStripMenuItem, Wallet.CharacterPool.AlphaLowercase }
+                { alphanumericToolStripMenuItem, CharacterPool.AlphanumericMixedCase },
+                { alphanumericUpperCaseToolStripMenuItem, CharacterPool.AlphanumericUppercase },
+                { alphanumericLowercaseToolStripMenuItem, CharacterPool.AlphanumericLowercase },
+                { numericToolStripMenuItem, CharacterPool.Numeric },
+                { alphaMixedCaseToolStripMenuItem, CharacterPool.AlphaMixedCase },
+                { alphaUppercaseToolStripMenuItem, CharacterPool.AlphaUppercase },
+                { alphaLowercaseToolStripMenuItem, CharacterPool.AlphaLowercase }
             };
 
             var poolType = typeDict[(ToolStripMenuItem)sender];
