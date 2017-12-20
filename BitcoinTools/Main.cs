@@ -16,6 +16,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.IO;
 using System.Threading;
+using BitcoinTools;
 
 namespace BitcoinTool
 {
@@ -27,7 +28,7 @@ namespace BitcoinTool
         public Main()
         {
             InitializeComponent();
-            Icon = Properties.Resources.bitcoin;
+            //Icon = Properties.Resources.bitcoin;
 
             labelKeyError.Text = "";
 
@@ -35,19 +36,20 @@ namespace BitcoinTool
 
             toolStrip1.Renderer = new FixedTSSR();
 
-            //Wallet w = Wallet.FromPrivateKeyHex("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+            Wallet w = Wallet.FromPrivateKeyHex("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+            DisplayWallet(w);
             //var aa = w.Address(true);
             //MessageBox.Show(aa);
-            string key = null;
+            //string key = null;
 
-            Parallel.For(0, long.MaxValue, (i, p) => 
-            {
-                key = Wallet.GenerateUpperWIF();
-                p.Stop();
-            });
+            //Parallel.For(0, long.MaxValue, (i, p) => 
+            //{
+            //    key = Wallet.GenerateUpperWIF();
+            //    p.Stop();
+            //});
 
-            Console.WriteLine("success: " + key);
-            Console.ReadLine();
+            //Console.WriteLine("success: " + key);
+            //Console.ReadLine();
         }
 
         public class FixedTSSR : ToolStripSystemRenderer
@@ -69,7 +71,7 @@ namespace BitcoinTool
 
             if (checkBoxCompressed.Checked)
             {
-                textBoxPrivateKey.Text = wallet.PrivateKeyWIFCompressed;
+                textBoxPrivateKey.Text = wallet.PrivateKeyWifCompressed;
                 textBoxAddress.Text = wallet.AddressCompressed;
                 textBoxHash160.Text = wallet.Hash160Compressed;
                 textBoxPublicKey.Text = wallet.PublicKeyHexCompressed;
@@ -77,7 +79,7 @@ namespace BitcoinTool
             }
             else
             {
-                textBoxPrivateKey.Text = wallet.PrivateKeyWIF;
+                textBoxPrivateKey.Text = wallet.PrivateKeyWif;
                 textBoxAddress.Text = wallet.Address;
                 textBoxHash160.Text = wallet.Hash160;
                 textBoxPublicKey.Text = wallet.PublicKeyHex;
@@ -139,7 +141,7 @@ namespace BitcoinTool
         {
             try
             {
-                var w = Wallet.FromWIF(textBoxPrivateKey.Text, c => checkBoxCompressed.Checked = c);
+                var w = Wallet.FromWif(textBoxPrivateKey.Text, c => checkBoxCompressed.Checked = c);
                 ClearTextboxes(textBoxPrivateKey);
                 DisplayWallet(w);
             }
@@ -165,7 +167,7 @@ namespace BitcoinTool
             };
 
             var poolType = typeDict[(ToolStripMenuItem)sender];
-            textBoxMinikey.Text = (Wallet.GenerateMiniKey(poolType));
+            textBoxMinikey.Text = (Generation.GenerateMiniKey(poolType));
 
         }
 
@@ -189,7 +191,7 @@ namespace BitcoinTool
         private void toolStripButton2_Click(object sender, EventArgs e)
         {
             ClearTextboxes();
-            DisplayWallet(new Wallet());
+            DisplayWallet(Wallet.Generate());
         }
 
         private void checkBoxCompressed_CheckedChanged(object sender, EventArgs e)

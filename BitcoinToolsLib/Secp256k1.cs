@@ -6,7 +6,6 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
 
 /* 
@@ -14,9 +13,9 @@ using System.Windows.Forms;
  */
 
 
-namespace BitcoinTool
+namespace BitcoinTools
 {
-    class Secp256k1
+    public class Secp256k1
     {
 
         static class Parameters
