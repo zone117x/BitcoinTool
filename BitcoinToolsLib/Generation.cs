@@ -41,38 +41,45 @@ namespace BitcoinTools
             }
         }
 
-        public static string GenerateUpperWif()
+        public static string GenerateWif(CharacterPool charPool = CharacterPool.AlphanumericUppercase)
         {
-            var pool = Encoding.GetCharacterPool(CharacterPool.AlphanumericUppercase);
-            long attempts = 0;
-            if (_rand == null)
-            {
-                _rand = RandomNumberGenerator.Create();
-            }
-
+            var pool = Encoding.GetCharacterPool(charPool);
+            var bytes = new byte[50];
+            int attempts = 0;
             while (true)
             {
-                var bytes = new byte[46];
+                attempts++;
                 _rand.GetNonZeroBytes(bytes);
                 var key = "5" + new String(bytes.Select(x => pool[x % pool.Length]).ToArray());
 
-                var keyBytes = Encoding.Base58Decode(key);
-                var test = Encoding.Base58Encode(keyBytes);
-                var checksum = Encoding.DoubleSha256(keyBytes);
-                Array.Reverse(keyBytes);
-                Array.Resize(ref keyBytes, keyBytes.Length + 4);
-                Array.Reverse(keyBytes);
-                //Buffer.BlockCopy(checksum, 0, keyBytes, keyBytes.Length - 4, 4);
-                key = Encoding.Base58Encode(keyBytes);
+                var decoded = Encoding.Base58Decode(key);
+                var keyLen = decoded.Length;
+                var keyBytes = decoded.Take(keyLen - 4).ToArray();
+                keyBytes = Encoding.DoubleSha256(keyBytes);
 
-                if (Validation.TryValidatePrivateKey(key))
+                decoded[keyLen - 4] = keyBytes[0];
+                decoded[keyLen - 3] = keyBytes[1];
+                decoded[keyLen - 2] = keyBytes[2];
+                decoded[keyLen - 1] = keyBytes[3];
+
+                key = Encoding.Base58Encode(decoded);
+
+                // check if key has any lowercase chars
+                if (key.Any(k => !pool.Contains(k)))
                 {
-                    return key;
+                    continue;
                 }
-                else
+
+                // ensure wif can roundtrip decode
+                var wallet = Wallet.FromWif(key);
+                if (wallet.PrivateKeyWif != key)
                 {
-                    //Console.WriteLine("Invalid key: " + key);
+                    continue;
                 }
+
+                Console.WriteLine($"Generated uppercase private WIF key after {attempts} attempts");
+                return key;
+
             }
         }
 

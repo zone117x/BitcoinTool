@@ -55,10 +55,27 @@ namespace BitcoinTools
             var keyBytes = new byte[keyLen - 4];
             Buffer.BlockCopy(decoded, 0, keyBytes, 0, keyBytes.Length);
             keyBytes = DoubleSha256(keyBytes);
+
             return keyBytes[0] == decoded[keyLen - 4]
                 && keyBytes[1] == decoded[keyLen - 3]
                 && keyBytes[2] == decoded[keyLen - 2]
                 && keyBytes[3] == decoded[keyLen - 1];
+        }
+
+        public static string FixWifChecksum(string key)
+        {
+            var decoded = Base58Decode(key);
+            var keyLen = decoded.Length;
+            var keyBytes = new byte[keyLen - 4];
+            Buffer.BlockCopy(decoded, 0, keyBytes, 0, keyBytes.Length);
+            keyBytes = DoubleSha256(keyBytes);
+
+            decoded[keyLen - 4] = keyBytes[0];
+            decoded[keyLen - 3] = keyBytes[1];
+            decoded[keyLen - 2] = keyBytes[2];
+            decoded[keyLen - 1] = keyBytes[3];
+            var f = Base58Encode(decoded);
+            return f;
         }
 
     }

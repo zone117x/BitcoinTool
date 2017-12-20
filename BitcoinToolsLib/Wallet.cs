@@ -90,6 +90,20 @@ namespace BitcoinTools
 
         public string Address => Base58Encode(PublicKeyToAddressBytes(PublicKeyBytes));
         public string AddressCompressed => Base58Encode(PublicKeyToAddressBytes(PublicKeyBytesCompressed));
+
+        public override string ToString()
+        {
+            return string.Join(Environment.NewLine, new[] 
+            {               
+                $"{nameof(Address)}: {Address}",
+                $"{nameof(AddressCompressed)}: {AddressCompressed}",
+                $"{nameof(PublicKeyHex)}: {PublicKeyHex}",
+                $"{nameof(PublicKeyHexCompressed)}: {PublicKeyHexCompressed}",
+                $"{nameof(PrivateKeyWif)}: {PrivateKeyWif}",
+                $"{nameof(PrivateKeyWifCompressed)}: {PrivateKeyWifCompressed}",
+                $"{nameof(PrivateKeyHex)}: {PrivateKeyHex}",
+            });
+        }
  
         
     }
