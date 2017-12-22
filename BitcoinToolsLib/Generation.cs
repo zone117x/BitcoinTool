@@ -6,23 +6,23 @@ namespace BitcoinTools
 {
     public static class Generation
     {
-        [ThreadStatic]
-        static RandomNumberGenerator _rand = RandomNumberGenerator.Create();
 
         public static byte[] GeneratePrivateKey()
         {
+            var rand = RandomNumberGenerator.Create();
             var privateKeyBytes = new byte[32];
-            _rand.GetNonZeroBytes(privateKeyBytes);
+            rand.GetNonZeroBytes(privateKeyBytes);
             return privateKeyBytes;
         }
 
         public static string GenerateMiniKey(CharacterPool type = CharacterPool.AlphanumericMixedCase)
         {
+            var rand = RandomNumberGenerator.Create();
             var pool = Encoding.GetCharacterPool(type);
             while (true)
             {
                 var bytes = new byte[29];
-                _rand.GetNonZeroBytes(bytes);
+                rand.GetNonZeroBytes(bytes);
                 var minikey = "S" + new String(bytes.Select<byte, char>(x => pool[x % pool.Length]).ToArray());
 
                 try
@@ -44,12 +44,13 @@ namespace BitcoinTools
         public static string GenerateWif(CharacterPool charPool = CharacterPool.AlphanumericUppercase)
         {
             var pool = Encoding.GetCharacterPool(charPool);
+            var rand = RandomNumberGenerator.Create();
             var bytes = new byte[50];
             int attempts = 0;
             while (true)
             {
                 attempts++;
-                _rand.GetNonZeroBytes(bytes);
+                rand.GetNonZeroBytes(bytes);
                 var key = "5" + new String(bytes.Select(x => pool[x % pool.Length]).ToArray());
 
                 var decoded = Encoding.Base58Decode(key);

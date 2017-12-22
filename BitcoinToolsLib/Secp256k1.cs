@@ -41,18 +41,18 @@ namespace BitcoinTools
             }
         }
 
-        ECPoint point;
-        byte[] privateKey;
+        ECPoint _point;
+        byte[] _privateKey;
 
         public Secp256k1(byte[] privateKey)
         {
-            this.privateKey = privateKey;
-            point = Parameters.g.Multiply(new BigInteger(privateKey.Reverse().Concat(new byte[] { 0 }).ToArray()));
+            this._privateKey = privateKey;
+            _point = Parameters.g.Multiply(new BigInteger(privateKey.Reverse().Concat(new byte[] { 0 }).ToArray()));
         }
 
         public byte[] GetPublicKey(bool compressed)
         {
-            return GetEncoded(point, compressed);
+            return GetEncoded(_point, compressed);
         }
 
         byte[] GetEncoded(ECPoint point, bool compressed)
@@ -105,7 +105,7 @@ namespace BitcoinTools
             var r = ToReversedBytes(Parameters.n);
             var encoded_oid = new byte[] { 6, 7, 42, 134, 72, 206, 61, 1, 1 };
 
-            var secret = privateKey;
+            var secret = _privateKey;
             var encoded_gxgy = GetEncoded(Parameters.g, compressed);
             var encoded_pub = GetPublicKey(compressed);
 

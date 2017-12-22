@@ -1,95 +1,86 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using static System.Text.Encoding;
 using static BitcoinTools.Encoding;
 
 namespace BitcoinTools
 {
-    public class Wallet
+    public partial class Wallet
     {
-        readonly Lazy<Secp256k1> _curvePoint;
-        byte[] _privateKeyBytes;
-
-
-        public static Wallet FromPassphrase(string passphrase)
-        {
-            var privateKeyBytes = Sha256(UTF8.GetBytes(passphrase));
-            return new Wallet(privateKeyBytes);
-        }
-
-        public static Wallet FromPrivateKeyHex(string hex)
-        {
-            return new Wallet(HexToBytes(hex));
-        }
-
-        public static Wallet FromMiniKey(string miniKey)
-        {
-            switch (miniKey.Length)
-            {
-                case 22:
-                case 30:
-                    Validation.ValidateMiniKey(miniKey);
-                    var privateKeyBytes = Sha256(miniKey);
-                    return new Wallet(privateKeyBytes);
-                default:
-                    throw new ArgumentException("Key must be 22 or 30 chars for minikeys");
-            }
-        }
-
-        public static Wallet FromWif(string privateKey)
-        {
-            Validation.CheckBase58(privateKey);
-
-            byte[] privateKeyBytes;
-            switch (privateKey.Length)
-            {
-                case 51:
-                case 52:
-                    Validation.ValidatePrivateKey(privateKey);
-                    privateKeyBytes = WifToBytes(privateKey);
-                    break;
-                default:
-                    throw new ArgumentException("Key must be 51 or 52 chars");
-            }
-
-            return new Wallet(privateKeyBytes);
-        }
-
-        public static Wallet Generate()
-        {
-            return new Wallet(Generation.GeneratePrivateKey());
-        }
-
         public Wallet(byte[] privateKeyBytes)
         {
             _privateKeyBytes = privateKeyBytes;
-            _curvePoint = new Lazy<Secp256k1>(() => new Secp256k1(_privateKeyBytes));
         }
 
-        public Secp256k1 CurvePoint => _curvePoint.Value;
-
-        public string PrivateKeyHex => BytesToHex(_privateKeyBytes);
-
+        byte[] _privateKeyBytes;
         public byte[] PrivateKeyBytes => _privateKeyBytes;
 
-        public string PrivateKeyWif => BytesToWif(_privateKeyBytes);
-        public string PrivateKeyWifCompressed => BytesToWifCompressed(_privateKeyBytes);
+        Secp256k1 _curvePoint;
+        public Secp256k1 CurvePoint => _curvePoint
+            ?? (_curvePoint = new Secp256k1(_privateKeyBytes));
 
-        public string PrivateKeyDER => BytesToHex(CurvePoint.GetDER(false));
-        public string PrivateKeyDERCompressed => BytesToHex(CurvePoint.GetDER(true));
+        string _privateKeyHex;
+        public string PrivateKeyHex => _privateKeyHex
+            ?? (_privateKeyHex = BytesToHex(_privateKeyBytes));
 
-        public string Hash160 => BytesToHex(RipeMD160(Sha256(PublicKeyBytes)));
-        public string Hash160Compressed => BytesToHex(RipeMD160(Sha256(PublicKeyBytesCompressed)));
+        string _privateKeyWif;
+        public string PrivateKeyWif => _privateKeyWif
+            ?? (_privateKeyWif = BytesToWif(_privateKeyBytes));
 
-        public string PublicKeyHex => BytesToHex(PublicKeyBytes);
-        public string PublicKeyHexCompressed => BytesToHex(PublicKeyBytesCompressed);
+        string _privateKeyWifCompressed;
+        public string PrivateKeyWifCompressed => _privateKeyWifCompressed
+            ?? (_privateKeyWifCompressed = BytesToWifCompressed(_privateKeyBytes));
 
-        public byte[] PublicKeyBytes => CurvePoint.GetPublicKey(false);
-        public byte[] PublicKeyBytesCompressed => CurvePoint.GetPublicKey(true);
+        string _privateKeyDer;
+        public string PrivateKeyDer => _privateKeyDer
+            ?? (_privateKeyDer = BytesToHex(CurvePoint.GetDER(false)));
 
-        public string Address => Base58Encode(PublicKeyToAddressBytes(PublicKeyBytes));
-        public string AddressCompressed => Base58Encode(PublicKeyToAddressBytes(PublicKeyBytesCompressed));
+        string _privateKeyDerCompressed;
+        public string PrivateKeyDerCompressed => _privateKeyDerCompressed
+            ?? (_privateKeyDerCompressed = BytesToHex(CurvePoint.GetDER(true)));
+
+        string _ripeMD160;
+        public string RipeMD160 => _ripeMD160
+            ?? (_ripeMD160 = BytesToHex(RipeMD160(Sha256(PublicKeyBytes))));
+
+        string _ripeMD160Compressed;
+        public string RipeMD160Compressed => _ripeMD160Compressed
+            ?? (_ripeMD160Compressed = BytesToHex(RipeMD160(Sha256(PublicKeyBytesCompressed))));
+
+        string _publicKeyHex;
+        public string PublicKeyHex => _publicKeyHex
+            ?? (_publicKeyHex = BytesToHex(PublicKeyBytes));
+
+        string _publicKeyHexCompressed;
+        public string PublicKeyHexCompressed => _publicKeyHexCompressed
+            ?? (_publicKeyHexCompressed = BytesToHex(PublicKeyBytesCompressed));
+
+        byte[] _publicKeyBytes;
+        public byte[] PublicKeyBytes => _publicKeyBytes
+            ?? (_publicKeyBytes = CurvePoint.GetPublicKey(false));
+
+        byte[] _publicKeyBytesCompressed;
+        public byte[] PublicKeyBytesCompressed => _publicKeyBytesCompressed
+            ?? (_publicKeyBytesCompressed = CurvePoint.GetPublicKey(true));
+
+        string _address;
+        public string Address => _address
+            ?? (_address = Base58Encode(PublicKeyToAddressBytes(PublicKeyBytes)));
+
+        string _addressCompressed;
+        public string AddressCompressed => _addressCompressed
+            ?? (_addressCompressed = Base58Encode(PublicKeyToAddressBytes(PublicKeyBytesCompressed)));
+
+        long? _hashCodeLong;
+        public long GetHashCodeLong() => (_hashCodeLong
+            ?? (_hashCodeLong = XorBytesToInt64(PublicKeyBytesCompressed))).Value;
+
+        int? _hashCode;
+        public override int GetHashCode() => (_hashCode
+            ?? (_hashCode = XorBytesToInt32(PublicKeyBytesCompressed))).Value;
 
         public override string ToString()
         {

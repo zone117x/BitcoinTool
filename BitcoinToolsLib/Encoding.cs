@@ -32,15 +32,78 @@ namespace BitcoinTools
                 "abcdefghijkmnopqrstuvwxyz"
             };
 
-        public static byte[] HexToBytes(String HexString)
+        public static byte[] HexToBytes(string hex)
         {
-            int NumberChars = HexString.Length;
-            byte[] bytes = new byte[NumberChars / 2];
-            for (int i = 0; i < NumberChars; i += 2)
+            int GetHexVal(char c)
             {
-                bytes[i / 2] = Convert.ToByte(HexString.Substring(i, 2), 16);
+                int val = c;
+                return val - (val < 58 ? 48 : 87);
             }
-            return bytes;
+
+            if (hex.Length % 2 == 1)
+                throw new Exception("The binary key cannot have an odd number of digits");
+
+            byte[] arr = new byte[hex.Length >> 1];
+            for (int i = 0; i < hex.Length >> 1; ++i)
+            {
+                arr[i] = (byte)((GetHexVal(hex[i << 1]) << 4) + (GetHexVal(hex[(i << 1) + 1])));
+            }
+            return arr;
+        }
+
+        public static long XorBytesToInt64(byte[] bytes)
+        {
+            long val = default(long);
+            for (int index = 0; index < bytes.Length;)
+            {
+                var byteLen = bytes.Length - index;
+                if (byteLen >= 8)
+                {
+                    val ^= BitConverter.ToInt64(bytes, index);
+                    index += 8;
+                }
+                else if (byteLen >= 4)
+                {
+                    val ^= BitConverter.ToInt32(bytes, index);
+                    index += 4;
+                }
+                else if (byteLen >= 2)
+                {
+                    val ^= BitConverter.ToInt16(bytes, index);
+                    index += 2;
+                }
+                else
+                {
+                    val ^= bytes[index];
+                    index += 1;
+                }
+            }
+            return val;
+        }
+
+        public static int XorBytesToInt32(byte[] bytes)
+        {
+            int val = default(int);
+            for (int index = 0; index < bytes.Length;)
+            {
+                var byteLen = bytes.Length - index;
+                if (byteLen >= 4)
+                {
+                    val ^= BitConverter.ToInt32(bytes, index);
+                    index += 4;
+                }
+                else if (byteLen >= 2)
+                {
+                    val ^= BitConverter.ToInt16(bytes, index);
+                    index += 2;
+                }
+                else
+                {
+                    val ^= bytes[index];
+                    index += 1;
+                }
+            }
+            return val;
         }
 
         public static byte[] RipeMD160(byte[] bytes)

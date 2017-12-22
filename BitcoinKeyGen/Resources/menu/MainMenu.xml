@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+  <item
+       android:id="@+id/menu_generate_wallet"
+       android:title="Create" />
+  <item
+       android:id="@+id/menu_generate_wallet_uppercase"
+       android:title="Create Uppercase" />
+</menu>

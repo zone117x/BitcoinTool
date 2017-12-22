@@ -73,17 +73,17 @@ namespace BitcoinTool
             {
                 textBoxPrivateKey.Text = wallet.PrivateKeyWifCompressed;
                 textBoxAddress.Text = wallet.AddressCompressed;
-                textBoxHash160.Text = wallet.Hash160Compressed;
+                textBoxHash160.Text = wallet.RipeMD160Compressed;
                 textBoxPublicKey.Text = wallet.PublicKeyHexCompressed;
-                textBoxPrivateKeyDER.Text = wallet.PrivateKeyDERCompressed;
+                textBoxPrivateKeyDER.Text = wallet.PrivateKeyDerCompressed;
             }
             else
             {
                 textBoxPrivateKey.Text = wallet.PrivateKeyWif;
                 textBoxAddress.Text = wallet.Address;
-                textBoxHash160.Text = wallet.Hash160;
+                textBoxHash160.Text = wallet.RipeMD160;
                 textBoxPublicKey.Text = wallet.PublicKeyHex;
-                textBoxPrivateKeyDER.Text = wallet.PrivateKeyDER;
+                textBoxPrivateKeyDER.Text = wallet.PrivateKeyDer;
             }
             textBoxPrivateKey.TextChanged += textBoxPrivateKey_TextChanged;
 
@@ -141,7 +141,7 @@ namespace BitcoinTool
         {
             try
             {
-                var w = Wallet.FromWif(textBoxPrivateKey.Text, c => checkBoxCompressed.Checked = c);
+                var w = Wallet.FromWif(textBoxPrivateKey.Text);
                 ClearTextboxes(textBoxPrivateKey);
                 DisplayWallet(w);
             }

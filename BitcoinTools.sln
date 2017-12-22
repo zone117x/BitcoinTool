@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreConsole", "CoreConsole\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BitcoinToolsLib", "BitcoinToolsLib\BitcoinToolsLib.csproj", "{C20511C3-E67B-4F84-98AA-7CB151BF8A80}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BitcoinKeyGen", "BitcoinKeyGen\BitcoinKeyGen.csproj", "{C9C1F36E-DD4D-4BA7-8BE8-85000C6A323F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,6 +27,10 @@ Global
 		{C20511C3-E67B-4F84-98AA-7CB151BF8A80}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C20511C3-E67B-4F84-98AA-7CB151BF8A80}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C20511C3-E67B-4F84-98AA-7CB151BF8A80}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9C1F36E-DD4D-4BA7-8BE8-85000C6A323F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9C1F36E-DD4D-4BA7-8BE8-85000C6A323F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9C1F36E-DD4D-4BA7-8BE8-85000C6A323F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9C1F36E-DD4D-4BA7-8BE8-85000C6A323F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
