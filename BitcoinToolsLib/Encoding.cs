@@ -3,7 +3,6 @@ using System.Linq;
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
-using Org.BouncyCastle.Crypto.Digests;
 
 namespace BitcoinTools
 {
@@ -108,11 +107,11 @@ namespace BitcoinTools
 
         public static byte[] RipeMD160(byte[] bytes)
         {
-            var d = new RipeMD160Digest();
-            d.BlockUpdate(bytes, 0, bytes.Length);
-            var result = new byte[d.GetDigestSize()];
-            d.DoFinal(result, 0);
-            return result;
+            using (var d = new RIPEMD160Managed())
+            {
+                var result = d.ComputeHash(bytes);
+                return result;
+            }
         }
 
         public static byte[] PublicKeyToAddressBytes(byte[] bytes)
@@ -139,11 +138,11 @@ namespace BitcoinTools
 
         public static byte[] Sha256(byte[] bytes)
         {
-            var d = new Sha256Digest();
-            d.BlockUpdate(bytes, 0, bytes.Length);
-            var result = new byte[d.GetDigestSize()];
-            d.DoFinal(result, 0);
-            return result;
+            using (var d = new SHA256Managed())
+            {
+                var result = d.ComputeHash(bytes);
+                return result;
+            }
         }
 
         public static byte[] Sha256(string s)
