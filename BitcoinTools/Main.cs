@@ -65,13 +65,13 @@ namespace BitcoinTool
             this.wallet = wallet;
             labelKeyError.Text = "";
 
-            textBoxPrivateKey.TextChanged -= textBoxPrivateKey_TextChanged;
+            textBoxPrivateWif.TextChanged -= textBoxPrivateKey_TextChanged;
 
             textBoxSecretExponent.Text = wallet.PrivateKeyHex;
 
             if (checkBoxCompressed.Checked)
             {
-                textBoxPrivateKey.Text = wallet.PrivateKeyWifCompressed;
+                textBoxPrivateWif.Text = wallet.PrivateKeyWifCompressed;
                 textBoxAddress.Text = wallet.AddressCompressed;
                 textBoxHash160.Text = wallet.RipeMD160Compressed;
                 textBoxPublicKey.Text = wallet.PublicKeyHexCompressed;
@@ -79,13 +79,13 @@ namespace BitcoinTool
             }
             else
             {
-                textBoxPrivateKey.Text = wallet.PrivateKeyWif;
+                textBoxPrivateWif.Text = wallet.PrivateKeyWif;
                 textBoxAddress.Text = wallet.Address;
                 textBoxHash160.Text = wallet.RipeMD160;
                 textBoxPublicKey.Text = wallet.PublicKeyHex;
                 textBoxPrivateKeyDER.Text = wallet.PrivateKeyDer;
             }
-            textBoxPrivateKey.TextChanged += textBoxPrivateKey_TextChanged;
+            textBoxPrivateWif.TextChanged += textBoxPrivateKey_TextChanged;
 
         }
 
@@ -97,7 +97,7 @@ namespace BitcoinTool
             var textBoxes = new TextBox[]{
                 textBoxPassphrase,
                 textBoxMinikey,
-                textBoxPrivateKey,
+                textBoxPrivateWif,
                 textBoxAddress,
                 textBoxSecretExponent,
                 textBoxHash160,
@@ -141,8 +141,8 @@ namespace BitcoinTool
         {
             try
             {
-                var w = Wallet.FromWif(textBoxPrivateKey.Text);
-                ClearTextboxes(textBoxPrivateKey);
+                var w = Wallet.FromWif(textBoxPrivateWif.Text);
+                ClearTextboxes(textBoxPrivateWif);
                 DisplayWallet(w);
             }
             catch (Exception err)
@@ -199,6 +199,16 @@ namespace BitcoinTool
             DisplayWallet(wallet);
         }
 
+        private void toolStripWifUncompressed_Click(object sender, EventArgs e)
+        {
+            checkBoxCompressed.Checked = false;
+            DisplayWallet(Wallet.FromWif(Generation.GenerateWif(CharacterPool.AlphanumericMixedCase)));
+        }
 
+        private void toolStripWifUncompressedUppercase_Click(object sender, EventArgs e)
+        {
+            checkBoxCompressed.Checked = false;
+            DisplayWallet(Wallet.FromWif(Generation.GenerateWif(CharacterPool.AlphanumericUppercase)));
+        }
     }
 }
